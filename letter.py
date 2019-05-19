@@ -1,6 +1,7 @@
 import random
 import pygame
 import config
+# import scipy.interpolate
 
 
 class Letter:
@@ -12,6 +13,7 @@ class Letter:
     h = 80
     w = 40
     bg = config.colors["blue"]
+    screen = None
 
     def __init__(self, screen, index, value, text, x, y, w, h):
         self.index = index
@@ -23,20 +25,24 @@ class Letter:
         self.h = h
         self.screen = screen
 
-    def calcTextPosition(self, textWidth, textHeight):
-        x = self.x + (self.w / 2) - (textWidth / 2)
-        y = self.y + (self.h / 2) - (textHeight / 2)
+    def calcTextPosition(self, x, y, w, h, textWidth, textHeight):
+        x = x + (w / 2) - (textWidth / 2)
+        y = y + (h / 2) - (textHeight / 2)
         return (x, y)
 
-    def render(self):
+    def render(self, screen, index, value, text, x, y, w, h):
+        x = (index * w) + x
 
         font = pygame.font.SysFont("lato", 48)
-        text = font.render(self.text, True, config.colors["white"])
 
-        (textX, textY) = self.calcTextPosition(
-            text.get_width(), text.get_height())
+        textRenderer = font.render(text, True, config.colors["white"])
 
-        pygame.draw.rect(self.screen, self.bg,
-                         (self.x, self.y, self.w, self.h))
-        self.screen.blit(text, (textX,
-                                textY))
+        (textX, textY) = self.calcTextPosition(x, y, w, h,
+                                               textRenderer.get_width(), textRenderer.get_height())
+
+        pygame.draw.rect(screen, config.colors["darkBlue"],
+                         (x, y, w, h))
+        screen.blit(textRenderer, (textX,
+                                   textY))
+        pygame.draw.rect(screen,  config.colors["white"], [
+                         x, y, w, h], 10)
