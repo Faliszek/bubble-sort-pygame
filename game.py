@@ -43,7 +43,6 @@ class Game:
 
     def startGame(self):
         self.actualView = View.GAME
-        print("Started")
 
     def update(self, events):
         if self.actualView == View.START:

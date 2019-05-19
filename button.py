@@ -40,14 +40,13 @@ class Button:
         return (x, y)
 
     def onClick(self, clickX, clickY, eventType):
-        print("GITARA")
+        print("Button clcicked")
 
         if eventType == pygame.MOUSEBUTTONUP:
             if self.x <= clickX <= (self.x + self.w) and self.y <= clickY <= (self.y + self.h):
                 self.handleClick()
 
     def render(self, events):
-        print("button", events)
 
         x = self.calcX()
         font = pygame.font.SysFont("lato", 22)

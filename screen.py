@@ -15,12 +15,3 @@ class View(Enum):
 class Screen:
     def __init__(self, screen):
         screen.fill(config.colors["white"])
-
-
-class GameView(Screen):
-    def __init__(self, gameChanger, screen, events):
-        super().__init__(screen)
-
-        startButton = Button(screen, onClick=lambda: print(
-            "elo"), text="Zacznij od nowa", y=518)
-        startButton.render(events)
