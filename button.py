@@ -40,8 +40,6 @@ class Button:
         return (x, y)
 
     def onClick(self, clickX, clickY, eventType):
-        print("Button clcicked")
-
         if eventType == pygame.MOUSEBUTTONUP:
             if self.x <= clickX <= (self.x + self.w) and self.y <= clickY <= (self.y + self.h):
                 self.handleClick()

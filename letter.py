@@ -30,7 +30,7 @@ class Letter:
         y = y + (h / 2) - (textHeight / 2)
         return (x, y)
 
-    def render(self, screen, index, value, text, x, y, w, h):
+    def render(self, screen, index, value, text, x, y, w, h, bg):
         x = (index * w) + x
 
         font = pygame.font.SysFont("lato", 48)
@@ -40,7 +40,7 @@ class Letter:
         (textX, textY) = self.calcTextPosition(x, y, w, h,
                                                textRenderer.get_width(), textRenderer.get_height())
 
-        pygame.draw.rect(screen, config.colors["darkBlue"],
+        pygame.draw.rect(screen, bg,
                          (x, y, w, h))
         screen.blit(textRenderer, (textX,
                                    textY))

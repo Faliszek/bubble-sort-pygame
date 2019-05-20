@@ -12,7 +12,7 @@ from init_view import InitView
 class Game:
     carryOn = True
     clock = None
-    actualView = View.START
+    actualView = View.GAME
     screen = pygame.display.set_mode(
         (config.size["width"], config.size["height"]))
     initView = None

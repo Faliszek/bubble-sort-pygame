@@ -7,9 +7,18 @@ from button import Button
 from screen import Screen
 from letter import Letter
 from frame import Frame
+from message import Message
+from enum import Enum
 
 width = config.size["width"]
 height = config.size["height"]
+
+
+class Move(Enum):
+    START = 1
+    SUCCESS = 2
+    FAILURE = 3
+    VICTORY = 4
 
 
 class GameView(Screen):
@@ -27,6 +36,11 @@ class GameView(Screen):
     frameW = buttonW * 2
     frameH = buttonH
     framePosition = 0
+    message = """Zmieniaj elementy, w takiej kolejności jakiej zrobiłby to algorytm sortowania bąbelkowego!"""
+    lastMove = Move.START
+    switches = 0
+    frames = []
+    letterBg = config.colors["darkBlue"]
 
     def __init__(self,  screen):
         super().__init__(screen)
@@ -62,10 +76,24 @@ class GameView(Screen):
                     newArr[i+1] = temp
         return newArr
 
-    def printNumbers(self, arr):
+    def toNumbers(self, arr):
         newArr = []
         for el in arr:
             newArr.append(el.value)
+        return newArr
+
+    def toLetters(self, arr):
+        newArr = []
+        for el in arr:
+            newArr.append(el.text)
+        return newArr
+
+    def printNumbers(self, arr):
+        newArr = self.toNumbers(arr)
+        print(newArr)
+
+    def printLetters(self, arr):
+        newArr = self.toLetters(arr)
         print(newArr)
 
     def __str__(self):
@@ -92,21 +120,32 @@ class GameView(Screen):
         if len(letters) > 2:
             self.setSelectedValues(letters[0], letters[1])
 
+    def restartGame(self, screen):
+        self.setNewNumbers(screen)
+        self.lastMove = Move.START
+        self.message = """Zmieniaj elementy, w takiej kolejności jakiej zrobiłby to algorytm sortowania bąbelkowego!"""
+        self.setLetterBg()
+
     def analyzeNextMove(self):
         newArr = []
+        frames = []
+        framePosition = 0
+        loop = 0
         for i in self.letters:
             newArr.append(i)
         switched = False
         for passnum in range(len(newArr)-1, 0, -1):
+            framePosition = 0
             for i in range(passnum):
                 if newArr[i].value > newArr[i+1].value:
-                    switched = True
-                    self.setValuesToSwitch(
-                        newArr[i], newArr[i+1])
-                    return
+                    frames.append(framePosition)
+                    temp = newArr[framePosition]
+                    newArr[framePosition] = newArr[framePosition+1]
+                    newArr[framePosition + 1] = temp
+                framePosition += 1
 
-        if switched == True:
-            self.valuesToSwitch = []
+        self.frames = frames
+        print(self.frames)
 
     def setValuesToSwitch(self, firstNumber, secondNumber):
         self.valuesToSwitch = [firstNumber, secondNumber]
@@ -135,26 +174,66 @@ class GameView(Screen):
             arr[framePosition + 1].index = tempIndex
 
             self.letters = arr
+            self.setLastMove()
+            self.moveToText()
+            self.switches = +1
+            print(self.frames)
+
+    def setLastMove(self):
+        if len(self.frames) != 0:
+            nextMove = self.frames.pop(0)
+            if nextMove == self.framePosition:
+                self.lastMove = Move.SUCCESS
+            else:
+                self.lastMove = Move.FAILURE
+
+        if len(self.frames) == 0:
+            self.lastMove = Move.VICTORY
+
+        self.setLetterBg()
+
+    def moveToText(self):
+        if self.lastMove == Move.START:
+            self.message = """Zmieniaj elementy, w takiej kolejności jakiej zrobiłby to algorytm sortowania bąbelkowego!"""
+        elif self.lastMove == Move.FAILURE:
+            self.message = """UPS! Niestety nie udało się, kliknij Zacznij od nowa i spróbój ponownie!"""
+        elif self.lastMove == Move.SUCCESS:
+            self.message = """YAY! Oby tak dalej!"""
+        elif self.lastMove == Move.VICTORY:
+            self.message = """Gratulacje! Chcesz zagrać jeszcze raz, kliknij Zacznij od nowa"""
+        print(self.message)
+
+    def setLetterBg(self):
+        if self.lastMove == Move.START or self.lastMove == Move.SUCCESS:
+            self.letterBg = config.colors["darkBlue"]
+        elif self.lastMove == Move.FAILURE:
+            self.letterBg = config.colors["red"]
+        elif self.lastMove == Move.VICTORY:
+            self.letterBg = config.colors["green"]
 
     def render(self, gameChanger, screen, events):
         screen.fill(config.colors["white"])
 
         for letter in self.letters:
             letter.render(screen=screen, index=letter.index, value=letter.value,
-                          text=letter.text, x=letter.x, y=letter.y, w=letter.w, h=letter.h)
+                          text=letter.text, x=letter.x, y=letter.y, w=letter.w, h=letter.h, bg=self.letterBg)
 
         startButton = Button(
-            screen, onClick=lambda: self.setNewNumbers(screen), text="Zacznij od nowa", y=518)
+            screen, onClick=lambda: self.restartGame(screen), text="Zacznij od nowa", y=518)
         startButton.render(events)
-        # x 40 is initial
-        frame = Frame(x=self.buttonX + (self.framePosition * self.buttonW), y=self.frameY,
-                      h=self.frameH, w=self.frameW)
 
-        frame.render(screen, events)
+        message = Message(h=100, w=0.6, text=self.message)
+        message.render(screen=screen, h=100, w=0.6, text=self.message)
+
+        if self.lastMove == Move.SUCCESS or self.lastMove == Move.START:
+            frame = Frame(x=self.buttonX + (self.framePosition * self.buttonW), y=self.frameY,
+                          h=self.frameH, w=self.frameW)
+            frame.render(screen, events)
+
         for event in events:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
                     self.updateFramePosition(event.key)
+                    print(self.framePosition)
                 if event.key == pygame.K_SPACE:
-                    print("KLIKAM spacje", self.framePosition)
                     self.switchElements()
