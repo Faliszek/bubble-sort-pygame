@@ -16,7 +16,5 @@ class Frame:
         self.position = 1
 
     def render(self, screen, events):
-        # screen.arc(screen, config.colors["darkBlue"], Rect, start_angle, stop_angle, width=1)
-        # pygame.draw.rect(self.game, bg, (self.x, self.y, self.w, self.h), 2)
         pygame.draw.rect(screen, config.colors["darkBlue"], [
                          self.x, self.y, self.w, self.h], 2)
