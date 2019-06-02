@@ -4,11 +4,12 @@ import config
 import random
 
 from button import Button
-from screen import Screen
 from letter import Letter
 from frame import Frame
 from message import Message
+from image import Image
 from enum import Enum
+from copy import deepcopy
 
 width = config.size["width"]
 height = config.size["height"]
@@ -21,10 +22,10 @@ class Move(Enum):
     VICTORY = 4
 
 
-class GameView(Screen):
+class GameView:
     letters = []
+    backupLetters = []
     countNumbers = 8
-    valuesToSwitch = []
     win = False
     buttonY = 150
     buttonH = 120
@@ -38,43 +39,40 @@ class GameView(Screen):
     framePosition = 0
     message = """Zmieniaj elementy, w takiej kolejności jakiej zrobiłby to algorytm sortowania bąbelkowego!"""
     lastMove = Move.START
-    switches = 0
     frames = []
+    backupFrames = []
     letterBg = config.colors["darkBlue"]
 
     def __init__(self,  screen):
-        super().__init__(screen)
+
         self.setNewNumbers(screen)
-        self.printValuesToSwitch()
 
-    def randomValue(self):
-        return random.randint(65, 90)
+    def randomValues(self):
+        return random.sample(range(65, 90), self.countNumbers)
 
-    def initNumbers(self, screen):
+    def generateNumbers(self, screen):
         w = self.buttonW
         a = []
-        randomNumbers = random.sample(range(65, 90), self.countNumbers)
-        # randomNumbers = range(66, 90)
+        b = []
+        randomNumbers = self.randomValues()
+        backupRandomNumbers = deepcopy(randomNumbers)
+
         for i in range(self.countNumbers):
             value = randomNumbers[i]
 
             l = Letter(screen, index=i, value=value, text=chr(
                 value), x=self.buttonX, y=self.buttonY, w=w, h=120)
             a.append(l)
-        return a
 
-    def bubbleSort(self, arr):
-        newArr = []
-        for i in arr:
-            newArr.append(i)
+        for i in range(self.countNumbers):
+            value = backupRandomNumbers[i]
 
-        for passnum in range(len(newArr)-1, 0, -1):
-            for i in range(passnum):
-                if newArr[i].value > newArr[i+1].value:
-                    temp = newArr[i]
-                    newArr[i] = newArr[i+1]
-                    newArr[i+1] = temp
-        return newArr
+            l = Letter(screen, index=i, value=value, text=chr(
+                value), x=self.buttonX, y=self.buttonY, w=w, h=120)
+            b.append(l)
+
+        self.letters = a
+        self.backupLetters = b
 
     def toNumbers(self, arr):
         newArr = []
@@ -102,23 +100,11 @@ class GameView(Screen):
             newArr.append(el.text)
         return ",".join(newArr)
 
-    def printValuesToSwitch(self):
-        if len(self.valuesToSwitch) == 2:
-            f = self.valuesToSwitch[0]
-            s = self.valuesToSwitch[1]
-        else:
-            print("Nie poprawna tupla")
-            self.win = True
-
     def setNewNumbers(self, screen):
-        self.letters = self.initNumbers(screen)
-        letters = self.letters
-        self.sortedLetters = self.bubbleSort(letters)
-        self.analyzeNextMove()
-        self.printValuesToSwitch()
+        self.generateNumbers(screen)
+        self.printLetters(self.letters)
 
-        if len(letters) > 2:
-            self.setSelectedValues(letters[0], letters[1])
+        self.analyzeNextMove()
 
     def restartGame(self, screen):
         self.setNewNumbers(screen)
@@ -145,13 +131,8 @@ class GameView(Screen):
                 framePosition += 1
 
         self.frames = frames
+        self.backupFrames = deepcopy(frames)
         print(self.frames)
-
-    def setValuesToSwitch(self, firstNumber, secondNumber):
-        self.valuesToSwitch = [firstNumber, secondNumber]
-
-    def setSelectedValues(self, firstNumber, secondNumber):
-        self.selectedValues = [firstNumber, secondNumber]
 
     def updateFramePosition(self, event):
         if self.framePosition <= 5 and event == pygame.K_RIGHT:
@@ -174,45 +155,50 @@ class GameView(Screen):
             arr[framePosition + 1].index = tempIndex
 
             self.letters = arr
-            self.setLastMove()
-            self.moveToText()
-            self.switches = +1
-            print(self.frames)
 
-    def setLastMove(self):
+    def setMove(self):
+
         if len(self.frames) != 0:
             nextMove = self.frames.pop(0)
             if nextMove == self.framePosition:
                 self.lastMove = Move.SUCCESS
+                self.switchElements()
             else:
                 self.lastMove = Move.FAILURE
+                self.printLetters(self.backupLetters)
+                self.letters = self.backupLetters
+                self.frames = deepcopy(self.backupFrames)
+                self.framePosition = 0
 
         if len(self.frames) == 0:
             self.lastMove = Move.VICTORY
 
+        print(self.frames)
+
+        self.moveToText()
         self.setLetterBg()
 
     def moveToText(self):
         if self.lastMove == Move.START:
             self.message = """Zmieniaj elementy, w takiej kolejności jakiej zrobiłby to algorytm sortowania bąbelkowego!"""
         elif self.lastMove == Move.FAILURE:
-            self.message = """UPS! Niestety nie udało się, kliknij Zacznij od nowa i spróbój ponownie!"""
+            self.message = """UPS! Niestety nie udało się :( Zdarza się najlepszym, spróboj jeszcze raz! ;)"""
         elif self.lastMove == Move.SUCCESS:
             self.message = """YAY! Oby tak dalej!"""
         elif self.lastMove == Move.VICTORY:
             self.message = """Gratulacje! Chcesz zagrać jeszcze raz, kliknij Zacznij od nowa"""
-        print(self.message)
 
     def setLetterBg(self):
         if self.lastMove == Move.START or self.lastMove == Move.SUCCESS:
             self.letterBg = config.colors["darkBlue"]
-        elif self.lastMove == Move.FAILURE:
-            self.letterBg = config.colors["red"]
         elif self.lastMove == Move.VICTORY:
             self.letterBg = config.colors["green"]
 
     def render(self, gameChanger, screen, events):
         screen.fill(config.colors["white"])
+
+        bg = Image(screen, name="bubbles-bg.png", y=-100)
+        bg.render()
 
         for letter in self.letters:
             letter.render(screen=screen, index=letter.index, value=letter.value,
@@ -225,10 +211,9 @@ class GameView(Screen):
         message = Message(h=100, w=0.6, text=self.message)
         message.render(screen=screen, h=100, w=0.6, text=self.message)
 
-        if self.lastMove == Move.SUCCESS or self.lastMove == Move.START:
-            frame = Frame(x=self.buttonX + (self.framePosition * self.buttonW), y=self.frameY,
-                          h=self.frameH, w=self.frameW)
-            frame.render(screen, events)
+        frame = Frame(x=self.buttonX + (self.framePosition * self.buttonW), y=self.frameY,
+                      h=self.frameH, w=self.frameW)
+        frame.render(screen, events)
 
         for event in events:
             if event.type == pygame.KEYDOWN:
@@ -236,4 +221,4 @@ class GameView(Screen):
                     self.updateFramePosition(event.key)
                     print(self.framePosition)
                 if event.key == pygame.K_SPACE:
-                    self.switchElements()
+                    self.setMove()

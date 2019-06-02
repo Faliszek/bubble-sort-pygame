@@ -27,5 +27,5 @@ class Image:
 
     def render(self):
 
-        logorect = (self.x, self.y)
-        self.game.blit(self.img, logorect)
+        rect = (self.x, self.y)
+        self.game.blit(self.img, rect)

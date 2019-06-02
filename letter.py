@@ -44,5 +44,5 @@ class Letter:
                          (x, y, w, h))
         screen.blit(textRenderer, (textX,
                                    textY))
-        pygame.draw.rect(screen,  config.colors["white"], [
+        pygame.draw.rect(screen,  config.colors["blue"], [
                          x, y, w, h], 10)

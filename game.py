@@ -4,15 +4,15 @@ from button import Button
 from image import Image
 
 
-from screen import View
 from game_view import GameView
 from init_view import InitView
+from screen import View
 
 
 class Game:
     carryOn = True
     clock = None
-    actualView = View.GAME
+    actualView = View.START
     screen = pygame.display.set_mode(
         (config.size["width"], config.size["height"]))
     initView = None
@@ -43,6 +43,7 @@ class Game:
 
     def startGame(self):
         self.actualView = View.GAME
+        self.initView = None
 
     def update(self, events):
         if self.actualView == View.START:
